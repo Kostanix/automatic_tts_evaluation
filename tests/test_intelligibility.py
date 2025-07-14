@@ -17,7 +17,6 @@ reference_text = metadata["text"]
 # do evaluation
 result = evaluate_intelligibility(audio_path, reference_text)
 
-# Ausgabe
 print(f"Sample: {sample_id}")
 print(f"Referenztext: {reference_text}")
 print(f"WER: {result['wer']}")

@@ -1,15 +1,16 @@
+import json
 import os
 import csv
 
 from eval.intelligibility_eval import evaluate_intelligibility
+from eval.mos_eval import evaluate_mos
 from eval.speaker_similarity_eval import evaluate_speaker_similarity
 from eval.prosody_eval import evaluate_prosody
 
 DATA_DIR = "data"
 RESULTS_FILE = "results.csv"
 
-# Vollständige Spaltenliste
-HEADER = ["sample_id", "wer", "cer", "similarity", "f0_mean", "f0_std", "duration", "speech_rate"]
+HEADER = ["sample_id", "wer", "cer", "similarity", "f0_mean", "f0_std", "duration", "speech_rate", "mos_score"]
 
 sample_dirs = [d for d in os.listdir(DATA_DIR) if os.path.isdir(os.path.join(DATA_DIR, d))]
 
@@ -27,9 +28,13 @@ with open(RESULTS_FILE, "w", newline="", encoding="utf-8") as f:
             metadata_path = os.path.join(base_path, "metadata.json")
             reference_path = os.path.join(base_path, "reference.wav")
 
+            with open(metadata_path, "r", encoding="utf-8") as f:
+                metadata = json.load(f)
+                reference_text = metadata["text"]
+
             # Evaluate intelligibility
             try:
-                row.update(evaluate_intelligibility(audio_path, metadata_path))
+                row.update(evaluate_intelligibility(audio_path, reference_text))
             except Exception as e:
                 print(f"  [WARN] intelligibility failed: {e}")
 
@@ -44,6 +49,14 @@ with open(RESULTS_FILE, "w", newline="", encoding="utf-8") as f:
                 row.update(evaluate_prosody(audio_path, metadata_path))
             except Exception as e:
                 print(f"  [WARN] prosody failed: {e}")
+
+            # Evaluate MOS
+            try:
+                mos_score = evaluate_mos(audio_path)
+                row["mos_score"] = round(mos_score["mos_score"], 2)
+            except Exception as e:
+                print(f"  [WARN] mos failed: {e}")
+                row["mos"] = None
 
         except Exception as e:
             print(f"[ERROR] Skipping {sample_id} due to: {e}")
