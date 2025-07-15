@@ -1,3 +1,12 @@
+import warnings
+
+# Suppress specific deprecation warning from torch
+warnings.filterwarnings(
+    "ignore",
+    message="`torch.nn.utils.weight_norm` is deprecated",
+    category=FutureWarning
+)
+
 import torch
 import torchaudio
 
