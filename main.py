@@ -15,7 +15,6 @@ sample_dirs = [d for d in os.listdir(DATA_DIR) if os.path.isdir(os.path.join(DAT
 all_metadata_keys = set()
 results_rows = []
 
-# Erste Schleife: Metadatenfelder sammeln
 for sample_id in sample_dirs:
     base_path = os.path.join(DATA_DIR, sample_id)
     metadata_path = os.path.join(base_path, "metadata.json")
@@ -25,11 +24,9 @@ for sample_id in sample_dirs:
             metadata = json.load(f)
             all_metadata_keys.update(metadata.keys())
 
-# Feste Ergebnisfelder
 eval_keys = ["sample_id", "wer", "cer", "similarity", "f0_mean", "f0_std", "duration", "speech_rate", "mos_score"]
 header = ["sample_id"] + sorted(all_metadata_keys) + eval_keys[1:]  # sample_id nicht doppeln
 
-# Zweite Schleife: Daten sammeln
 with open(RESULTS_FILE, "w", newline="", encoding="utf-8") as f:
     writer = csv.DictWriter(f, fieldnames=header)
     writer.writeheader()
