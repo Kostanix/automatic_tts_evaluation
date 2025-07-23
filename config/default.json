@@ -1,0 +1,7 @@
+{
+  "data_dir": "data",
+  "results_file": "results.csv",
+  "enable": ["intelligibility", "prosody", "similarity", "mos"],
+  "use_gpu": true,
+  "log_level": "INFO"
+}

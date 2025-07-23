@@ -1,82 +1,101 @@
 import os
 import csv
-import json
+import argparse
+import logging
 
-from eval.intelligibility_eval import evaluate_intelligibility
-from eval.speaker_similarity_eval import evaluate_speaker_similarity
-from eval.prosody_eval import evaluate_prosody
-from eval.mos_eval import evaluate_mos
+from utils.config_utils import load_config, merge_args_with_config
+from utils.logging_utils import setup_logging
+from utils.evaluation_utils import run_evaluations
 
-DATA_DIR = "data"
-RESULTS_FILE = "results.csv"
+DEFAULT_CONFIG_PATH = "config/default.json"
 
-sample_dirs = [d for d in os.listdir(DATA_DIR) if os.path.isdir(os.path.join(DATA_DIR, d))]
+def main():
+    """
+    Main entry point for the evaluation pipeline.
 
-all_metadata_keys = set()
-results_rows = []
+    - Parses command-line arguments
+    - Loads and merges configuration
+    - Collects metadata from samples
+    - Executes selected evaluation metrics per sample
+    - Writes results to a CSV file
 
-for sample_id in sample_dirs:
-    base_path = os.path.join(DATA_DIR, sample_id)
-    metadata_path = os.path.join(base_path, "metadata.json")
+    Returns:
+        None
+    """
+    parser = argparse.ArgumentParser(description="Automated evaluation of TTS systems")
+    parser.add_argument("--config", type=str, default=DEFAULT_CONFIG_PATH, help="Path to configuration file")
+    parser.add_argument("--data_dir", type=str, help="Path to input sample directory")
+    parser.add_argument("--results_file", type=str, help="Path to output results CSV")
+    parser.add_argument("--enable", nargs="+", help="List of metrics to enable (e.g., intelligibility prosody)")
+    parser.add_argument("--use_gpu", type=bool, help="Force GPU usage (true/false)")
+    parser.add_argument("--log_level", type=str, help="Logging level (DEBUG, INFO, WARNING, ERROR)")
+    args = parser.parse_args()
 
-    if os.path.exists(metadata_path):
-        with open(metadata_path, "r", encoding="utf-8") as f:
-            metadata = json.load(f)
-            all_metadata_keys.update(metadata.keys())
+    # Load and merge config
+    config = load_config(args.config)
+    cfg = merge_args_with_config(args, config)
 
-eval_keys = ["sample_id", "wer", "cer", "similarity", "f0_mean", "f0_std", "duration", "speech_rate", "mos_score"]
-header = ["sample_id"] + sorted(all_metadata_keys) + eval_keys[1:]  # sample_id nicht doppeln
+    # Setup logging
+    setup_logging(cfg.get("log_level", "INFO"))
 
-with open(RESULTS_FILE, "w", newline="", encoding="utf-8") as f:
-    writer = csv.DictWriter(f, fieldnames=header)
-    writer.writeheader()
+    data_dir = cfg["data_dir"]
+    results_file = cfg["results_file"]
+    enabled_metrics = set(cfg["enable"])
 
+    logging.info(f"Enabled metrics: {enabled_metrics}")
+    logging.info(f"Loading samples from '{data_dir}'...")
+
+    # Discover sample folders
+    sample_dirs = [d for d in os.listdir(data_dir) if os.path.isdir(os.path.join(data_dir, d))]
+    all_metadata_keys = set()
+
+    # Collect all metadata fields across samples
     for sample_id in sample_dirs:
-        print(f"Processing {sample_id}...")
-        row = {"sample_id": sample_id}
-
-        try:
-            base_path = os.path.join(DATA_DIR, sample_id)
-            audio_path = os.path.join(base_path, "audio.wav")
-            metadata_path = os.path.join(base_path, "metadata.json")
-            reference_path = os.path.join(base_path, "reference.wav")
-
-            # Load metadata
-            if os.path.exists(metadata_path):
+        metadata_path = os.path.join(data_dir, sample_id, "metadata.json")
+        if os.path.exists(metadata_path):
+            try:
                 with open(metadata_path, "r", encoding="utf-8") as f:
-                    meta = json.load(f)
-                    row.update(meta)
-
-            with open(metadata_path, "r", encoding="utf-8") as f:
-                metadata = json.load(f)
-                reference_text = metadata["text"]
-
-            # Evaluations
-            try:
-                row.update(evaluate_intelligibility(audio_path, reference_text))
+                    metadata = f.read()
+                    all_metadata_keys.update(eval(metadata).keys())  # safer: use json.load() if unsure
             except Exception as e:
-                print(f"  [WARN] intelligibility failed: {e}")
+                logging.warning(f"[{sample_id}] Failed to read metadata: {e}")
 
-            try:
-                row.update(evaluate_speaker_similarity(audio_path, reference_path))
-            except Exception as e:
-                print(f"  [WARN] similarity failed: {e}")
+    # Build CSV header
+    eval_keys = ["sample_id", "wer", "cer", "similarity", "f0_mean", "f0_std", "duration", "speech_rate", "mos_score"]
+    header = ["sample_id"] + sorted(all_metadata_keys) + eval_keys[1:]  # avoid duplicate sample_id
 
-            try:
-                row.update(evaluate_prosody(audio_path, metadata_path))
-            except Exception as e:
-                print(f"  [WARN] prosody failed: {e}")
+    # Evaluate and write results
+    with open(results_file, "w", newline="", encoding="utf-8") as f_out:
+        writer = csv.DictWriter(f_out, fieldnames=header)
+        writer.writeheader()
 
-            try:
-                row.update(evaluate_mos(audio_path))
-            except Exception as e:
-                print(f"  [WARN] mos failed: {e}")
+        for sample_id in sample_dirs:
+            logging.info(f"Processing sample: {sample_id}")
+            base_path = os.path.join(data_dir, sample_id)
+            row = {"sample_id": sample_id}
 
-        except Exception as e:
-            print(f"[ERROR] Skipping {sample_id}: {e}")
+            # Load metadata into row
+            metadata_path = os.path.join(base_path, "metadata.json")
+            if os.path.exists(metadata_path):
+                try:
+                    with open(metadata_path, "r", encoding="utf-8") as f:
+                        metadata = f.read()
+                        row.update(eval(metadata))  # or use json.load() if stored as JSON
+                except Exception as e:
+                    logging.warning(f"[{sample_id}] Metadata loading failed: {e}")
 
-        # Ensure all columns are present
-        for key in header:
-            row.setdefault(key, None)
+            # Run all enabled evaluations for this sample
+            eval_results = run_evaluations(sample_id, base_path, enabled_metrics)
+            row.update(eval_results)
 
-        writer.writerow(row)
+            # Fill in missing fields (optional but safe)
+            for key in header:
+                row.setdefault(key, None)
+
+            writer.writerow(row)
+
+    logging.info(f"Evaluation complete. Results saved to '{results_file}'.")
+
+# === Entry point ===
+if __name__ == "__main__":
+    main()
