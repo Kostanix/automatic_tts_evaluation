@@ -53,12 +53,12 @@ echo 'export PATH=~/mounted_home/bin:$PATH' >> ~/.bashrc
 ffmpeg -version
 ```
 
-### Ausführen
+## Ausführen
 ```bash
 python main.py --config config/default.json
 ```
 
-### Ergebniss
+## Ergebniss
 Alle Bewertungen werden gesammelt in:
 ```
 results.csv
