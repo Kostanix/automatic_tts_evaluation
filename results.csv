@@ -1,0 +1,6 @@
+sample_id,language,model,speaker,text,wer,cer,similarity,f0_mean,f0_std,duration,speech_rate,mos_score
+sample_001,de,TTS-Demo,Andrea,The birch canoe slid on the smooth planks.,0.5,0.167,0.445,164.49,11.08,2.43,3.29,4.085560321807861
+sample_002,en,TTS-Demo,Andrea,Glue the sheet to the dark blue background.,0.0,0.0,0.4635,162.11,17.29,2.34,3.41,4.230908393859863
+sample_003,en,TTS-Demo,Andrea,It's easy to tell the depth of a well.,0.0,0.0,0.4777,163.26,48.19,2.24,4.01,4.144764423370361
+sample_004,en,TTS-Demo,Andrea,These days a chicken leg is a rare dish.,0.333,0.15,0.5612,161.79,15.22,2.44,3.68,4.078857421875
+sample_005,en,TTS-Demo,Andrea,Rice is often served in round bowls.,0.286,0.167,0.464,159.18,11.57,2.51,2.79,4.163893699645996
