@@ -36,7 +36,11 @@ def run_evaluations(sample_id, base_path, enabled_metrics):
             logging.warning(f"[{sample_id}] Failed to load metadata text: {e}")
 
     metric_dispatch = {
-        "intelligibility": lambda: evaluate_intelligibility(audio_path, reference_text),
+        "intelligibility": lambda: evaluate_intelligibility(
+            audio_path,
+            reference_text,
+            metadata.get("language") if 'metadata' in locals() else None
+        ),
         "prosody": lambda: evaluate_prosody(audio_path, metadata_path),
         "similarity": lambda: evaluate_speaker_similarity(audio_path, reference_path)
         if os.path.exists(reference_path)

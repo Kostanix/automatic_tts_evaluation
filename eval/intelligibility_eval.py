@@ -1,14 +1,21 @@
-import os
-
+import torch
+import logging
 import whisper
 from jiwer import wer, cer
 
-model = whisper.load_model("base")
+# Load Whisper model
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model = whisper.load_model("medium", device=device)
+logging.info(f"Whisper model loaded on device: {device}")
 
-def evaluate_intelligibility(audio_path, reference_text):
+def evaluate_intelligibility(audio_path, reference_text, language=None):
     try:
-        # Whisper-transcription
-        result = model.transcribe(audio_path)
+        try:
+            result = model.transcribe(audio_path, language=language)
+        except ValueError as lang_error:
+            logging.warning(f"Invalid language '{language}' – falling back to auto-detection. Error: {lang_error}")
+            result = model.transcribe(audio_path)
+
         recognized_text = result["text"]
 
         # WER & CER calculation
@@ -21,7 +28,7 @@ def evaluate_intelligibility(audio_path, reference_text):
         }
 
     except Exception as e:
-        print(f"[ERROR] intelligibility_eval failed: {e}")
+        logging.error(f"intelligibility_eval failed: {e}")
         return {
             "wer": None,
             "cer": None
