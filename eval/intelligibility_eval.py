@@ -1,14 +1,10 @@
-import torch
 import logging
-import whisper
 from jiwer import wer, cer
 
-# Load Whisper model
-device = "cuda" if torch.cuda.is_available() else "cpu"
-model = whisper.load_model("medium", device=device)
-logging.info(f"Whisper model loaded on device: {device}")
+# Will be set from outside
+WHISPER_MODEL_NAME = "medium"
 
-def evaluate_intelligibility(audio_path, reference_text, language=None):
+def evaluate_intelligibility(audio_path, reference_text, model, language=None):
     try:
         try:
             result = model.transcribe(audio_path, language=language)

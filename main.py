@@ -2,6 +2,8 @@ import os
 import csv
 import argparse
 import logging
+import torch
+import whisper
 
 from utils.config_utils import load_config, merge_args_with_config
 from utils.logging_utils import setup_logging
@@ -29,10 +31,17 @@ def main():
     parser.add_argument("--enable", nargs="+", help="List of metrics to enable (e.g., intelligibility prosody)")
     parser.add_argument("--use_gpu", type=bool, help="Force GPU usage (true/false)")
     parser.add_argument("--log_level", type=str, help="Logging level (DEBUG, INFO, WARNING, ERROR)")
+    parser.add_argument(
+        "--whisper_model", type=str,help="Whisper model size to use (tiny, base, small, medium, large, turbo)"
+    )
+
     args = parser.parse_args()
 
-    # Load and merge config
     config = load_config(args.config)
+
+    if args.whisper_model:
+        config["whisper_model"] = args.whisper_model
+
     cfg = merge_args_with_config(args, config)
 
     # Setup logging
@@ -44,6 +53,11 @@ def main():
 
     logging.info(f"Enabled metrics: {enabled_metrics}")
     logging.info(f"Loading samples from '{data_dir}'...")
+
+    # Whisper model initialization
+    device = "cuda" if torch.cuda.is_available() else "cpu"
+    whisper_model = whisper.load_model(config.get("whisper_model", "medium"), device=device)
+    logging.info(f"Whisper model loaded on device: {device}")
 
     # Discover sample folders
     sample_dirs = [d for d in os.listdir(data_dir) if os.path.isdir(os.path.join(data_dir, d))]
@@ -85,7 +99,7 @@ def main():
                     logging.warning(f"[{sample_id}] Metadata loading failed: {e}")
 
             # Run all enabled evaluations for this sample
-            eval_results = run_evaluations(sample_id, base_path, enabled_metrics)
+            eval_results = run_evaluations(sample_id, base_path, enabled_metrics, whisper_model)
             row.update(eval_results)
 
             # Fill in missing fields (optional but safe)

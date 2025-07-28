@@ -8,7 +8,7 @@ from eval.prosody_eval import evaluate_prosody
 from eval.mos_eval import evaluate_mos
 
 
-def run_evaluations(sample_id, base_path, enabled_metrics):
+def run_evaluations(sample_id, base_path, enabled_metrics, whisper_model):
     """
     Runs all enabled evaluation metrics for a given sample folder.
 
@@ -16,6 +16,7 @@ def run_evaluations(sample_id, base_path, enabled_metrics):
         sample_id (str): The sample identifier.
         base_path (str): Path to the sample folder.
         enabled_metrics (set): Set of enabled metric names.
+        whisper_model
 
     Returns:
         dict: Dictionary containing metric results.
@@ -39,6 +40,7 @@ def run_evaluations(sample_id, base_path, enabled_metrics):
         "intelligibility": lambda: evaluate_intelligibility(
             audio_path,
             reference_text,
+            whisper_model,
             metadata.get("language") if 'metadata' in locals() else None
         ),
         "prosody": lambda: evaluate_prosody(audio_path, metadata_path),

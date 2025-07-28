@@ -3,5 +3,6 @@
   "results_file": "results.csv",
   "enable": ["intelligibility", "prosody", "similarity", "mos"],
   "use_gpu": true,
-  "log_level": "INFO"
+  "log_level": "INFO",
+  "whisper_model": "medium"
 }
