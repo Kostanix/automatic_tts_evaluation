@@ -1,6 +1,8 @@
 import os
 import json
 import logging
+from typing import Dict, Set, Any
+
 
 from eval.intelligibility_eval import evaluate_intelligibility
 from eval.speaker_similarity_eval import evaluate_speaker_similarity
@@ -8,15 +10,20 @@ from eval.prosody_eval import evaluate_prosody
 from eval.mos_eval import evaluate_mos
 
 
-def run_evaluations(sample_id, base_path, enabled_metrics, whisper_model):
+def run_evaluations(
+    sample_id: str,
+    base_path: str,
+    enabled_metrics: Set[str],
+    whisper_model: Any
+) -> Dict[str, Any]:
     """
     Runs all enabled evaluation metrics for a given sample folder.
 
     Args:
-        sample_id (str): The sample identifier.
-        base_path (str): Path to the sample folder.
-        enabled_metrics (set): Set of enabled metric names.
-        whisper_model
+        sample_id (str): Unique identifier for the sample (used in logging).
+        base_path (str): Path to the sample directory containing 'audio.wav', 'metadata.json', and optionally 'reference.wav'.
+        enabled_metrics (Set[str]): Set of metric names to run (e.g., {"intelligibility", "mos"}).
+        whisper_model (Any): A preloaded Whisper model instance for transcription-based evaluations.
 
     Returns:
         dict: Dictionary containing metric results.
@@ -63,7 +70,13 @@ def run_evaluations(sample_id, base_path, enabled_metrics, whisper_model):
     return result
 
 
-def _log_missing_reference(sample_id):
+def _log_missing_reference(sample_id: str) -> None:
+    """
+    Logs a warning if 'reference.wav' is missing for speaker similarity evaluation.
+
+    Args:
+        sample_id (str): The sample identifier (used for logging).
+    """
     """
     Logs a warning if reference.wav is missing for speaker similarity evaluation.
 

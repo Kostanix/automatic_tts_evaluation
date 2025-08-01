@@ -11,15 +11,17 @@ from utils.evaluation_utils import run_evaluations
 
 DEFAULT_CONFIG_PATH = "config/default.json"
 
-def main():
+def main() -> None:
     """
     Main entry point for the evaluation pipeline.
 
-    - Parses command-line arguments
-    - Loads and merges configuration
-    - Collects metadata from samples
-    - Executes selected evaluation metrics per sample
-    - Writes results to a CSV file
+    - Parses command-line arguments.
+    - Loads and merges configuration settings.
+    - Discovers sample folders and metadata.
+    - Runs selected evaluation metrics (WER, MOS, prosody, similarity) for each sample.
+    - Aggregates results and writes them to a CSV file.
+
+    CLI arguments override config file settings if provided.
 
     Returns:
         None

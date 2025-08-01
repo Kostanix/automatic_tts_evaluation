@@ -9,10 +9,17 @@ warnings.filterwarnings(
 
 import torch
 import torchaudio
+from typing import Dict
 
-def evaluate_mos(audio_path: str) -> dict:
+def evaluate_mos(audio_path: str) -> Dict[str, float]:
     """
     Predict MOS (speech quality score) using UTMOS model via SpeechMOS (torch.hub).
+    Args:
+        audio_path (str): Path to the audio file (typically a mono WAV file).
+
+    Returns:
+        dict: Dictionary containing the predicted MOS score under the key "mos_score".
+              Example: {"mos_score": 4.12}
     """
 
     # Load pretrained UTMOS model once via torch.hub

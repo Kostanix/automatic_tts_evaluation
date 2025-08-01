@@ -1,6 +1,12 @@
+import argparse
 import json
 
-def load_config(path):
+from typing import Dict
+
+from typing_extensions import Any
+
+
+def load_config(path: str) -> Dict[str, Any]:
     """
     Loads a JSON configuration file from the given path.
 
@@ -13,7 +19,7 @@ def load_config(path):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
-def merge_args_with_config(args, config):
+def merge_args_with_config(args: argparse.Namespace, config: Dict[str, Any]) -> Dict[str, Any]:
     """
     Merges CLI arguments with values from the configuration file.
     CLI arguments override config values if provided.

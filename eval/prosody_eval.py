@@ -2,16 +2,25 @@ import parselmouth
 import os
 import json
 
+from typing import Dict
 
-def evaluate_prosody(audio_path: str, metadata_path: str) -> dict:
+
+def evaluate_prosody(audio_path: str, metadata_path: str) ->Dict[str, float]:
     """
     Extracts prosodic features from an audio file using Parselmouth (Praat).
 
-    Returns a dictionary with:
-    - F0 mean (fundamental frequency)
-    - F0 standard deviation (pitch variation)
-    - Duration
-    - Speech rate (words per second)
+    Args:
+        audio_path (str): Path to the WAV audio file to analyze.
+        metadata_path (str): Path to the JSON metadata file containing the reference text under key "text".
+
+    Returns:
+        dict: A dictionary containing rounded prosodic feature values:
+            {
+                "f0_mean": float,
+                "f0_std": float,
+                "duration": float,
+                "speech_rate": float
+            }
     """
 
     # Load metadata (for reference text)

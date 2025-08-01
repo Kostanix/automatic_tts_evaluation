@@ -1,6 +1,6 @@
 import logging
 
-def setup_logging(level_str):
+def setup_logging(level_str: str) -> None:
     """
     Configures Python logging with the given verbosity level.
 
